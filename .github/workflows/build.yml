@@ -9,8 +9,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Build
-        run: .\gradlew.bat build || (powershell -c "iwr https://services.gradle.org/distributions/gradle-8.7-bin.zip -OutFile gradle.zip; Expand-Archive gradle.zip -DestinationPath .; .\gradle-8.7\bin\gradle.bat build")
+        shell: pwsh
+        run: |
+          if (Test-Path .\gradlew.bat) {
+            echo "Using Gradle Wrapper"
+            .\gradlew.bat build
+          } else {
+            echo "Gradle wrapper not found. Downloading Gradle 8.7..."
+            Invoke-WebRequest -Uri https://services.gradle.org/distributions/gradle-8.7-bin.zip -OutFile gradle.zip
+            Expand-Archive gradle.zip -DestinationPath .
+            .\gradle-8.7\bin\gradle.bat build
+          }
+
       - name: Upload Jar
         uses: actions/upload-artifact@v4
         with:
