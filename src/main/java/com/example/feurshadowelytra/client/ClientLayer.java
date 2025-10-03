@@ -2,10 +2,12 @@ package com.example.feurshadowelytra.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.ElytraModel;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -21,19 +23,15 @@ import com.example.feurshadowelytra.RegistryInit;
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientLayer {
   @SubscribeEvent
-  public static void addLayers(EntityRenderersEvent.AddLayers e) {
+  public static void onAddLayers(EntityRenderersEvent.AddLayers e) {
     EntityRendererProvider.Context ctx = e.getContext();
-    try {
-      PlayerRenderer def = (PlayerRenderer) e.getSkin("default");
-      def.addLayer(new WingLayer(def, ctx.getModelSet()));
-    } catch (Throwable ignored) {}
-    try {
-      PlayerRenderer slim = (PlayerRenderer) e.getSkin("slim");
-      slim.addLayer(new WingLayer(slim, ctx.getModelSet()));
-    } catch (Throwable ignored) {}
+    for (String skin : e.getSkins()) {
+      PlayerRenderer pr = e.getSkin(skin);
+      if (pr != null) pr.addLayer(new WingLayer(pr, ctx.getModelSet()));
+    }
   }
 
-  static class WingLayer extends RenderLayer<AbstractClientPlayer, net.minecraft.client.model.PlayerModel<AbstractClientPlayer>> {
+  static class WingLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private final ElytraModel<AbstractClientPlayer> model;
 
     public WingLayer(PlayerRenderer parent, EntityModelSet set) {
@@ -48,11 +46,11 @@ public class ClientLayer {
       if (chest.isEmpty() || chest.getItem() != RegistryInit.FEUR_WINGS_ELYTRA.get()) return;
 
       ResourceLocation tex = TexturePicker.pick(chest);
-      var v = buf.getBuffer(net.minecraft.client.renderer.RenderType.entityCutoutNoCull(tex));
+      var vb = buf.getBuffer(RenderType.entityCutoutNoCull(tex));
       this.getParentModel().copyPropertiesTo(this.model);
       this.model.setupAnim(p, a, b, d, e, f);
       pose.pushPose();
-      this.model.renderToBuffer(pose, v, light, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT, 1, 1, 1, 1);
+      this.model.renderToBuffer(pose, vb, light, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT, 1,1,1,1);
       pose.popPose();
     }
   }
