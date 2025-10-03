@@ -53,7 +53,7 @@ processResources {
 }
 
 jar {
-    from('src/main/resources')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes(
             "Implementation-Title": archivesBaseName,
