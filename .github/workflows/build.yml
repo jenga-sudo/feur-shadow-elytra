@@ -10,21 +10,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Build
+      - name: Build (Gradle wrapper or fallback)
         shell: pwsh
         run: |
           if (Test-Path .\gradlew.bat) {
-            echo "Using Gradle Wrapper"
-            .\gradlew.bat build
+            .\gradlew.bat clean build --stacktrace
           } else {
-            echo "Gradle wrapper not found. Downloading Gradle 8.7..."
             Invoke-WebRequest -Uri https://services.gradle.org/distributions/gradle-8.7-bin.zip -OutFile gradle.zip
             Expand-Archive gradle.zip -DestinationPath .
-            .\gradle-8.7\bin\gradle.bat build
+            .\gradle-8.7\bin\gradle.bat clean build --stacktrace
           }
+          echo "== Built files =="
+          Get-ChildItem -Recurse build\libs | ForEach-Object { Write-Host $_.FullName, $_.Length }
 
-      - name: Upload Jar
+      - name: Upload ALL jars from build/libs
         uses: actions/upload-artifact@v4
         with:
           name: feur_shadow_elytra
-          path: build\libs\*.jar
+          path: |
+            build\libs\*.jar
+            !build\libs\*sources*.jar
+            !build\libs\*javadoc*.jar
